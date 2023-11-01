@@ -1,13 +1,6 @@
-//
-//  QuestionFactory.swift
-//  MovieQuiz
-//
-//  Created by Александр Баранов on 28.10.2023.
-//
-
 import Foundation
 
-class QuestionFactory {
+class QuestionFactory: QuestionFactoryProtocol {
     private let questions: [QuizQuestion] = [
         QuizQuestion(
             image: "The Godfather",
