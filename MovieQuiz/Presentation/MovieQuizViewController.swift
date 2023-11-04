@@ -19,9 +19,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactory?
     private var currentQuestion: QuizQuestion?
+    private var alertPresenter: AlertPresenter?
     // MARK: - View Life Cycles
     override func viewDidLoad() {
         questionFactory = QuestionFactory(delegate: self)
+        alertPresenter = AlertPresenter(viewController: self)
         super.viewDidLoad()
 
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
@@ -83,6 +85,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         noButton.isEnabled = true
     }
     
+    private func show(quiz result: QuizResultsViewModel) {
+        let alertModel = AlertModel(title: "Этот раунд окончен" ,
+                                    message: "Ваш результат: \(correctAnswers)/10",
+                                    buttonText: "Сыграть ещё раз",
+                                    buttonAction: { [weak self] in
+            self?.currentQuestionIndex = 0
+            self?.correctAnswers = 0
+            self?.questionFactory?.requestNextQuestion()
+        }
+    )
+        alertPresenter?.show(alertModel: alertModel)
+    }
+    
     // приватный метод, который меняет цвет рамки
     // принимает на вход булевое значение и ничего не возвращает
     private func showAnswerResult(isCorrect: Bool) {
@@ -126,30 +141,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             questionFactory?.requestNextQuestion()
             imageView.layer.borderWidth = 0
             imageView.layer.borderColor = UIColor.clear.cgColor
-
         }
     }
     
-    // приватный метод для показа результатов раунда квиза
-    // принимает вью модель QuizResultsViewModel и ничего не возвращает
-    private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in // слабая ссылка на self
-            guard let self = self else { return } // разворачиваем слабую ссылку
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-            
-            self.questionFactory?.requestNextQuestion()
-        }
-        
-        alert.addAction(action)
-        
-        self.present(alert, animated: true, completion: nil)
-    }
+
 }
 /*
  Mock-данные
