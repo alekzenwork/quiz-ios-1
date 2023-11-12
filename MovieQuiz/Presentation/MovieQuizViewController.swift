@@ -22,6 +22,86 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var alertPresenter: AlertPresenter?
     // MARK: - View Life Cycles
     override func viewDidLoad() {
+
+        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileName = "inception.json"
+        documentsURL.appendPathComponent(fileName)
+        let jsonString = try? String(contentsOf: documentsURL)
+        
+        do {
+            if let data = jsonString?.data(using: .utf8) {
+                let movie = try JSONDecoder().decode(Movie.self, from: data)
+                
+                // Теперь у вас есть декодированный объект `movie`
+            } else {
+                print("Failed to convert JSON string to data")
+            }
+        } catch {
+            print("Failed to parse: \(error.localizedDescription)")
+        }
+
+
+        
+        
+        
+        
+        
+                 /*
+        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        enum FileManagerError: Error {
+            case fileDoesntExist
+        }
+        
+        func string(from documentsURL: URL) throws -> String {
+            // проверяем существует ли файл
+            if !FileManager.default.fileExists(atPath: documentsURL.path) {
+                // прокидываем ошибку
+                throw FileManagerError.fileDoesntExist
+            }
+            // файл существует, а значит возвращаем значение
+            return try String(contentsOf: documentsURL)
+        }
+        var str = ""
+        
+        do {
+            str = try string(from: documentsURL)
+        } catch FileManagerError.fileDoesntExist {
+            print("Файл по адресу \(documentsURL.path) не существует")
+        } catch {
+            print("Неизвестная ошибка чтения из файла \(error)")
+            print(str)
+        }
+        */
+        
+        /*
+        //получаем адрес папки Documents
+        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        //создаем основу для будущего файла
+        var fileName = "text.swift"
+        //добавили в конец адреса имя файла для его создания
+        documentsURL.appendPathComponent(fileName)
+        //проверям существует ли имя файла по указанному адресу
+        
+        if !FileManager.default.fileExists(atPath: documentsURL.path) {
+            let hello = "Hello world!"
+            let data = hello.data(using: .utf8)
+            FileManager.default.createFile(atPath: documentsURL.path, contents: data)
+        }
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!)
+        */
+        
+        /*
+        do {
+            str = try string(from: documentsURL)
+        } catch FileManagerError.fileDoesntExist {
+            print("Файл по адресу \(documentsURL.path) не существует")
+        } catch {
+            print("Неизвестная ошибка чтения из файла \(error)")
+        }
+        */
+        
+        
         questionFactory = QuestionFactory(delegate: self)
         alertPresenter = AlertPresenter(viewController: self)
         super.viewDidLoad()
