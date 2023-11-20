@@ -30,8 +30,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         do {
             if let data = jsonString?.data(using: .utf8) {
-                let movie = try JSONDecoder().decode(Movie.self, from: data)
-                
+                _ = try JSONDecoder().decode(Movie.self, from: data)
                 // Теперь у вас есть декодированный объект `movie`
             } else {
                 print("Failed to convert JSON string to data")
@@ -39,7 +38,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         } catch {
             print("Failed to parse: \(error.localizedDescription)")
         }
-
 
         
         

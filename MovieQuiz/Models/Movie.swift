@@ -1,14 +1,10 @@
 struct Actor: Codable {
-    let id: String
-    let image: String
     let name: String
     let asCharacter: String
 }
 struct Movie: Codable {
-    let id: String
     let title: String
     let year: Int
-    let image: String
     let releaseDate: String
     let runtimeMins: Int
     let directors: String
@@ -20,13 +16,12 @@ struct Movie: Codable {
     }
     
     enum CodingKeys: CodingKey {
-        case id, title, year, image, releaseDate, runtimeMins, directors, actorList
+        case title, year, releaseDate, runtimeMins, directors, actorList
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        id = try container.decode(String.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
 
         let year = try container.decode(String.self, forKey: .year)
@@ -35,7 +30,6 @@ struct Movie: Codable {
         }
         self.year = yearValue
 
-        image = try container.decode(String.self, forKey: .image)
         releaseDate = try container.decode(String.self, forKey: .releaseDate)
 
         let runtimeMins = try container.decode(String.self, forKey: .runtimeMins)
