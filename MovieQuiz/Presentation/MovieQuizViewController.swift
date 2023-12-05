@@ -12,7 +12,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet weak private var counterLabel: UILabel!
     @IBOutlet weak private var imageView: UIImageView!
     
-    // MARK: - Private Properties    
+    // MARK: - Private Properties
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     
@@ -20,88 +20,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactory?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenter?
+    private var statisticService: StatisticService?
     // MARK: - View Life Cycles
     override func viewDidLoad() {
-
-        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileName = "inception.json"
-        documentsURL.appendPathComponent(fileName)
-        let jsonString = try? String(contentsOf: documentsURL)
-        
-        do {
-            if let data = jsonString?.data(using: .utf8) {
-                _ = try JSONDecoder().decode(Movie.self, from: data)
-                // Теперь у вас есть декодированный объект `movie`
-            } else {
-                print("Failed to convert JSON string to data")
-            }
-        } catch {
-            print("Failed to parse: \(error.localizedDescription)")
-        }
-
-        
-        
-        
-        
-        
-                 /*
-        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        
-        enum FileManagerError: Error {
-            case fileDoesntExist
-        }
-        
-        func string(from documentsURL: URL) throws -> String {
-            // проверяем существует ли файл
-            if !FileManager.default.fileExists(atPath: documentsURL.path) {
-                // прокидываем ошибку
-                throw FileManagerError.fileDoesntExist
-            }
-            // файл существует, а значит возвращаем значение
-            return try String(contentsOf: documentsURL)
-        }
-        var str = ""
-        
-        do {
-            str = try string(from: documentsURL)
-        } catch FileManagerError.fileDoesntExist {
-            print("Файл по адресу \(documentsURL.path) не существует")
-        } catch {
-            print("Неизвестная ошибка чтения из файла \(error)")
-            print(str)
-        }
-        */
-        
-        /*
-        //получаем адрес папки Documents
-        var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        //создаем основу для будущего файла
-        var fileName = "text.swift"
-        //добавили в конец адреса имя файла для его создания
-        documentsURL.appendPathComponent(fileName)
-        //проверям существует ли имя файла по указанному адресу
-        
-        if !FileManager.default.fileExists(atPath: documentsURL.path) {
-            let hello = "Hello world!"
-            let data = hello.data(using: .utf8)
-            FileManager.default.createFile(atPath: documentsURL.path, contents: data)
-        }
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!)
-        */
-        
-        /*
-        do {
-            str = try string(from: documentsURL)
-        } catch FileManagerError.fileDoesntExist {
-            print("Файл по адресу \(documentsURL.path) не существует")
-        } catch {
-            print("Неизвестная ошибка чтения из файла \(error)")
-        }
-        */
-        
         
         questionFactory = QuestionFactory(delegate: self)
         alertPresenter = AlertPresenter(viewController: self)
+        statisticService = StatisticServiceImplementation()
         super.viewDidLoad()
 
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
@@ -175,10 +100,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     )
         alertPresenter?.show(alertModel: alertModel)
     }
-    
     // приватный метод, который меняет цвет рамки
     // принимает на вход булевое значение и ничего не возвращает
     private func showAnswerResult(isCorrect: Bool) {
+    
         yesButton.isEnabled = false
         noButton.isEnabled = false
         if isCorrect {
@@ -195,11 +120,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self.showNextQuestionOrResults()
         }
     }
-    
+
     // приватный метод, который содержит логику перехода в один из сценариев
     // метод ничего не принимает и ничего не возвращает
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
+            showFinalResults()
+            /*
             // идём в состояние "Результат квиза"
             let text = correctAnswers == questionsAmount ?
                         "Поздравляем, вы ответили на 10 из 10!" :
@@ -210,7 +137,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                 buttonText: "Сыграть ещё раз")
             
             show(quiz: viewModel)
-            
+            */
             imageView.layer.borderWidth = 0
             imageView.layer.borderColor = UIColor.clear.cgColor
         } else { // 2
@@ -222,8 +149,43 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     
-
-}
+    private func showFinalResults() {
+        statisticService?.store(correct: correctAnswers, total: questionsAmount)
+        
+        guard (statisticService?.bestGame) != nil else {
+            assertionFailure("error message")
+            return
+        }
+        
+        let alertModel = AlertModel(title: "Игра окончена!" ,
+                                    message: makeResultMessage(),
+                                    buttonText: "OK",
+                                    buttonAction: { [weak self] in
+            self?.currentQuestionIndex = 0
+            self?.correctAnswers = 0
+            self?.questionFactory?.requestNextQuestion()
+        }
+    )
+        alertPresenter?.show(alertModel: alertModel)
+    }
+    private func makeResultMessage() -> String {
+        guard let statisticService = statisticService, let bestGame = statisticService.bestGame else {
+            assertionFailure("error message")
+            return ""
+        }
+            
+            let accuracy = String(format: "%.2f", statisticService.totalAccuracy)
+            let totalPlaysCountLine = "Количество сыгранных кивзов: \(statisticService.gamesCount)"
+            let currentGameResultLine = "Ваш результат: \(correctAnswers)\\\(questionsAmount)"
+            let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)" + "(\(bestGame.date.dateTimeString))"
+            let averageAccuracyLine = "Средняя точность: \(accuracy)%"
+        
+        let resultMessage = [currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine
+        ].joined(separator: "\n")
+        
+        return resultMessage
+        }
+    }
 /*
  Mock-данные
  
